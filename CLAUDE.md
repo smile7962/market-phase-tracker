@@ -68,8 +68,8 @@
   - [ ] Phase 1-B: ECOS 국채3년 + FRED 미국채10년 (키 발급 후)
   - [ ] 투자자 순매수 소스 결정 (KRX 계정 vs Naver vs 간접 추정)
 - [x] Phase 2 — 정적 국면/지표 화면 (`web/index.html`): 3탭(국면·지표·학습) SPA, `data.json` 소비. 국면 배지+게이지+한줄요약, 지표 카드(값·전일대비·SVG 스파크라인·Risk 색), 학습 탭 프로토타입 이식.
-- [ ] Phase 3 — 국면 엔진 고도화(가중치·추세·신뢰도) + 인과 사슬 뷰 + 국면 타임라인
-- [ ] Phase 4 — PWA화(설치·오프라인) + GitHub Actions 자동화
+- [~] Phase 3 — 국면 엔진 고도화(가중치·추세·신뢰도) + 인과 사슬 뷰 + 국면 타임라인. *잠정 엔진은 `src/engine.py`에 구현됨; 가중치·임계값 튜닝은 실데이터 수 일 축적 후.*
+- [x] Phase 4 — PWA화(`web/manifest.webmanifest`·`web/sw.js`·아이콘, 설치·오프라인) + GitHub Actions 자동화(`.github/workflows/collect.yml`, 평일 16:30 KST → 수집·커밋·Pages 배포)
 
 ## 9. Stack
 Python(pykrx·FinanceDataReader·requests) · GitHub Actions + GitHub Pages/Vercel · 프론트 바닐라 JS + Chart.js + PWA · 저장은 JSON 파일.
