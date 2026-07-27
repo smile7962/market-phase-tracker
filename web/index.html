@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>시장 국면 트래커</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E141C; --ink-2:#131C27; --surface:#182432; --surface-2:#1F2E3E;
+    --line:#2A3B4D; --text:#E7EDF4; --muted:#8A9AAD; --faint:#5E6E80;
+    --on:#37D9AF; --on-dim:rgba(55,217,175,.14);
+    --off:#F2914A; --off-dim:rgba(242,145,74,.14);
+    --flow:#4C8FD6;
+    --green:#37D9AF; --yellow:#E9C46A; --amber:#F2914A; --red:#EF5F6B;
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);
+    line-height:1.7;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
+  .app{max-width:440px;margin:0 auto;min-height:100vh;
+    background:linear-gradient(180deg,#101925 0%,var(--ink) 34%);
+    padding:0 0 90px;position:relative;overflow:hidden}
+
+  header{padding:26px 22px 8px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--flow);font-weight:600}
+  h1{font-size:26px;line-height:1.24;font-weight:800;letter-spacing:-0.03em;margin:9px 0 4px}
+  .asof{color:var(--faint);font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
+
+  /* tab bar (하단 고정) */
+  .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:440px;display:flex;background:rgba(14,20,28,.92);
+    backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:30}
+  .tabbar button{flex:1;border:0;background:transparent;color:var(--faint);
+    font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.04em;
+    padding:13px 0 16px;cursor:pointer;transition:color .2s;position:relative}
+  .tabbar button.active{color:var(--text)}
+  .tabbar button.active::before{content:"";position:absolute;top:0;left:22%;right:22%;
+    height:2px;background:var(--on);border-radius:2px}
+
+  .panel{display:none;padding:18px 22px 4px;animation:fade .3s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .sec-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--faint);margin:6px 0 14px;
+    display:flex;align-items:center;gap:9px}
+  .sec-label::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* 국면 탭 */
+  .phase-card{background:var(--surface);border:1px solid var(--line);
+    border-radius:18px;padding:24px 20px 20px;text-align:center;position:relative;overflow:hidden}
+  .phase-card .edge{position:absolute;top:0;left:0;right:0;height:4px}
+  .badge{display:inline-flex;align-items:center;gap:9px;font-size:20px;font-weight:800;
+    letter-spacing:-0.02em;margin-bottom:4px}
+  .badge .dot{width:11px;height:11px;border-radius:50%}
+  .score{font-family:var(--mono);font-size:46px;font-weight:800;line-height:1.1;margin:6px 0 2px}
+  .score small{font-size:16px;color:var(--faint);font-weight:600}
+  .gauge{height:10px;border-radius:6px;margin:18px 4px 8px;position:relative;
+    background:linear-gradient(90deg,var(--red),var(--amber) 33%,var(--yellow) 60%,var(--green))}
+  .gauge .mark{position:absolute;top:-4px;width:4px;height:18px;border-radius:3px;
+    background:#fff;box-shadow:0 0 0 3px rgba(0,0,0,.35);transition:left .5s ease}
+  .gauge-scale{display:flex;justify-content:space-between;font-family:var(--mono);
+    font-size:10px;color:var(--faint);padding:0 2px}
+  .conf{margin-top:14px;font-size:13px;color:var(--muted)}
+  .conf b{color:var(--text)}
+  .narr{margin-top:16px;background:var(--ink-2);border:1px solid var(--line);
+    border-radius:14px;padding:15px 16px;font-size:14px;line-height:1.7;
+    color:#C6D2E0;text-align:left}
+  .narr .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+
+  /* 지표 탭 */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:13px 14px;position:relative}
+  .card.on{border-color:rgba(55,217,175,.4)}
+  .card.off{border-color:rgba(242,145,74,.4)}
+  .card.miss{opacity:.5}
+  .card .lbl{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .card .val{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:-0.02em}
+  .card .chg{font-family:var(--mono);font-size:11.5px;font-weight:600;margin-top:2px}
+  .card .chg.up{color:var(--green)} .card .chg.down{color:var(--red)}
+  .card svg{display:block;margin-top:8px;width:100%;height:28px;overflow:visible}
+  .card .miss-t{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:4px}
+  .sig-pill{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:10px;
+    font-weight:700;padding:2px 6px;border-radius:6px}
+  .sig-pill.p{background:var(--on-dim);color:var(--on)}
+  .sig-pill.n{background:var(--off-dim);color:var(--off)}
+  .sig-pill.z{background:rgba(138,154,173,.14);color:var(--muted)}
+
+  /* 학습 탭 (프로토타입 이식) */
+  .toggle{display:flex;background:var(--ink-2);border:1px solid var(--line);
+    border-radius:13px;padding:4px;gap:4px;margin-bottom:20px}
+  .toggle button{flex:1;border:0;background:transparent;color:var(--muted);
+    font-family:var(--sans);font-weight:700;font-size:13px;padding:10px 0;
+    border-radius:9px;cursor:pointer;transition:all .25s}
+  .toggle button .d{display:inline-block;width:7px;height:7px;border-radius:50%;
+    margin-right:6px;vertical-align:middle;background:currentColor;opacity:.9}
+  body[data-dir="on"] .toggle button.on{background:var(--on-dim);color:var(--on)}
+  body[data-dir="off"] .toggle button.off{background:var(--off-dim);color:var(--off)}
+  .chain{position:relative;padding-left:34px}
+  .chain::before{content:"";position:absolute;left:15px;top:14px;bottom:14px;width:2px;
+    border-radius:2px;background:var(--flow);transition:background .4s}
+  body[data-dir="on"] .chain::before{background:linear-gradient(180deg,#2C4A63,var(--on))}
+  body[data-dir="off"] .chain::before{background:linear-gradient(180deg,var(--off),#3A2C22)}
+  .node{position:relative;margin-bottom:10px}
+  .node::before{content:"";position:absolute;left:-27px;top:20px;width:12px;height:12px;
+    border-radius:50%;background:var(--ink);border:2.5px solid var(--flow);transition:.4s;z-index:2}
+  body[data-dir="on"] .node::before{border-color:var(--on);box-shadow:0 0 0 4px var(--on-dim)}
+  body[data-dir="off"] .node::before{border-color:var(--off);box-shadow:0 0 0 4px var(--off-dim)}
+  .node-head{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:14px 15px;cursor:pointer;display:flex;align-items:center;gap:12px}
+  .node.open .node-head{background:var(--surface-2);border-color:#3B566F;
+    border-bottom-left-radius:0;border-bottom-right-radius:0}
+  .layer-no{font-family:var(--mono);font-size:12px;color:var(--faint);font-weight:600;min-width:22px}
+  .node-title{flex:1}
+  .node-title strong{display:block;font-size:15px;font-weight:700;letter-spacing:-0.02em}
+  .node-title .codes{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+  .chev{color:var(--faint);font-size:13px;transition:transform .3s}
+  .node.open .chev,.ins-item.open .chev{transform:rotate(90deg)}
+  .node-body{max-height:0;overflow:hidden;background:var(--surface-2);border:1px solid #3B566F;
+    border-top:0;border-radius:0 0 14px 14px;transition:max-height .34s cubic-bezier(.4,0,.2,1)}
+  .node-body-inner{padding:2px 15px 16px;font-size:13.5px;color:#C6D2E0}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;color:var(--flow);
+    border:1px solid var(--line);border-radius:6px;padding:2px 7px;margin-bottom:9px}
+  .ins{border-top:1px solid var(--line);margin-top:22px}
+  .ins-item{border-bottom:1px solid var(--line)}
+  .ins-q{width:100%;text-align:left;background:transparent;border:0;cursor:pointer;
+    color:var(--text);padding:16px 2px;display:flex;gap:12px;align-items:baseline;font-family:var(--sans)}
+  .ins-n{font-family:var(--mono);font-size:12px;color:var(--on);font-weight:600;min-width:20px}
+  .ins-q strong{flex:1;font-size:14.5px;font-weight:600;letter-spacing:-0.02em;line-height:1.5}
+  .ins-a{max-height:0;overflow:hidden;transition:max-height .34s cubic-bezier(.4,0,.2,1)}
+  .ins-a-inner{padding:0 2px 17px 34px;font-size:13.5px;color:#C4D0DE;line-height:1.7}
+  .caveat{margin-top:22px;background:var(--off-dim);border:1px solid rgba(242,145,74,.28);
+    border-radius:14px;padding:15px 16px}
+  .caveat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--off);margin-bottom:7px;font-weight:600}
+  .caveat p{font-size:13px;line-height:1.7;color:#D9C4B2}
+  .err{background:var(--off-dim);border:1px solid rgba(242,145,74,.28);border-radius:12px;
+    padding:14px;font-size:13px;color:#D9C4B2}
+  footer{text-align:center;padding:28px 22px 0;color:var(--faint);
+    font-family:var(--mono);font-size:10px;letter-spacing:.08em}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body data-dir="off">
+<div class="app">
+  <header>
+    <div class="eyebrow">MARKET PHASE</div>
+    <h1 id="hd-title">시장 국면 트래커</h1>
+    <div class="asof" id="hd-asof">불러오는 중…</div>
+  </header>
+
+  <!-- 국면 -->
+  <div class="panel active" id="p-phase">
+    <div class="sec-label">오늘의 국면 · Phase</div>
+    <div id="phase-wrap"></div>
+  </div>
+
+  <!-- 지표 -->
+  <div class="panel" id="p-ind">
+    <div class="sec-label">지표 · Indicators</div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- 학습 -->
+  <div class="panel" id="p-study">
+    <div class="sec-label">인과 사슬 · The Chain</div>
+    <div class="toggle" role="group" aria-label="시장 방향">
+      <button class="off" onclick="setDir('off')"><span class="d"></span>Risk-off · 위험회피</button>
+      <button class="on" onclick="setDir('on')"><span class="d"></span>Risk-on · 위험선호</button>
+    </div>
+    <div class="chain" id="chain"></div>
+    <div class="ins" id="insights"></div>
+    <div class="caveat">
+      <div class="k">⚠ 유의</div>
+      <p>이 관계들이 항상 기계적으로 작동하진 않습니다. 위기 국면에선 안전자산인 달러·미국채가 동반 강세로 뒤집히기도 하죠. 그래서 지표 하나가 아니라 <b style="color:#F0C9A8">여러 지표가 같은 방향</b>을 가리킬 때 신뢰도가 올라갑니다.</p>
+    </div>
+    <footer>지표 관계 학습 · 인과 사슬</footer>
+  </div>
+
+  <nav class="tabbar">
+    <button class="active" onclick="showTab('phase',this)">국면</button>
+    <button onclick="showTab('ind',this)">지표</button>
+    <button onclick="showTab('study',this)">학습</button>
+  </nav>
+</div>
+
+<script>
+  // ── 탭 전환 ──
+  function showTab(id, btn){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('p-'+id).classList.add('active');
+    document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    window.scrollTo({top:0});
+  }
+
+  // ── 국면 렌더 ──
+  const COLOR = {green:'var(--green)',yellow:'var(--yellow)',amber:'var(--amber)',red:'var(--red)'};
+  function renderPhase(d){
+    const p = d.phase, c = COLOR[p.color] || 'var(--muted)';
+    const pos = Math.max(0,Math.min(100,(p.score+100)/2)); // -100..100 → 0..100%
+    document.getElementById('phase-wrap').innerHTML = `
+      <div class="phase-card">
+        <div class="edge" style="background:${c}"></div>
+        <div class="badge"><span class="dot" style="background:${c}"></span>${p.label}</div>
+        <div class="score" style="color:${c}">${p.score>0?'+':''}${p.score}<small> / 100</small></div>
+        <div class="gauge"><span class="mark" style="left:calc(${pos}% - 2px)"></span></div>
+        <div class="gauge-scale"><span>-100 위험회피</span><span>위험선호 +100</span></div>
+        <div class="conf">동조 지표 <b>${p.confidence}</b> / ${p.total} · 신뢰도 지표</div>
+        <div class="narr"><div class="k">한 문장 흐름</div>${d.narrative}</div>
+      </div>`;
+  }
+
+  // ── 지표 카드 ──
+  const ORDER = ['kospi','kosdaq','samsung','hynix','usdkrw','wti','us10y','kr3y','foreign','institution','individual'];
+  function fmt(v){
+    if(v==null) return '–';
+    const a=Math.abs(v);
+    if(a>=1e12) return (v/1e12).toFixed(2)+'조';
+    if(a>=1e8)  return (v/1e8).toFixed(1)+'억';
+    if(a>=1000) return v.toLocaleString('ko-KR',{maximumFractionDigits:0});
+    return v.toLocaleString('ko-KR',{maximumFractionDigits:2});
+  }
+  function spark(arr, color){
+    if(!arr||arr.length<2) return '';
+    const w=140,h=28,mn=Math.min(...arr),mx=Math.max(...arr),rg=(mx-mn)||1;
+    const pts=arr.map((v,i)=>`${(i/(arr.length-1)*w).toFixed(1)},${(h-(v-mn)/rg*h).toFixed(1)}`).join(' ');
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  }
+  function renderIndicators(d){
+    const g=document.getElementById('grid'); const ind=d.indicators;
+    g.innerHTML = ORDER.filter(k=>ind[k]).map(k=>{
+      const v=ind[k];
+      if(v.status!=='ok'){
+        return `<div class="card miss"><div class="lbl">${v.label}</div>
+          <div class="val">–</div><div class="miss-t">미수집</div></div>`;
+      }
+      const sig=v.signal||0;
+      const cls=sig>0?'on':(sig<0?'off':'');
+      const pill=sig>0?'p':(sig<0?'n':'z');
+      const pillT=sig>0?'RISK-ON':(sig<0?'RISK-OFF':'중립');
+      const col=sig>0?'var(--on)':(sig<0?'var(--off)':'var(--muted)');
+      const hasChg=v.chg_pct!=null;
+      const up=hasChg&&v.chg_pct>0;
+      const chg=hasChg?`<div class="chg ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(v.chg_pct).toFixed(2)}%</div>`:'';
+      return `<div class="card ${cls}">
+        <span class="sig-pill ${pill}">${pillT}</span>
+        <div class="lbl">${v.label}</div>
+        <div class="val">${fmt(v.value)}</div>${chg}
+        ${spark(v.spark,col)}
+      </div>`;
+    }).join('');
+  }
+
+  // ── 학습 탭 데이터 (프로토타입) ──
+  const nodes=[
+    {no:"01",title:"매크로",codes:"US 10Y · WTI",tag:"최상류 원인",body:"미국채 10년 금리는 전 세계 위험선호·유동성의 기준점, WTI는 인플레 압력과 글로벌 수요의 바로미터입니다. 유가가 오르면 인플레 우려로 금리 상승 압력이 생기고, 한국은 원유 수입국이라 유가 상승 자체가 무역수지 악화 → 원화 약세 요인이 됩니다."},
+    {no:"02",title:"환율 · 금리",codes:"USD/KRW · KR 3Y",tag:"자본의 방향",body:"핵심은 한미 금리차입니다. 미국 금리가 한국보다 벌어지면 자본이 미국으로 이동 → 원화 약세(환율 상승). 국채 3년 금리는 한국은행 기준금리 방향(통화정책 기대)을 반영하는 지표라, 미국채 10년과 대비해 보면 돈이 어디로 흐를지 읽힙니다."},
+    {no:"03",title:"수급",codes:"외국인 · 기관 · 개인",tag:"주도 세력",body:"환율과 외국인 매매는 역의 관계입니다. 원화가 강세면 환차익까지 노려 매수, 약세면 환차손 우려로 매도하는 경향이 있죠. 주체별로 보면 누가 시장을 이끄는지 보입니다 — 외국인+기관이 같은 방향이면 추세가 강하고, 개인만 홀로 받치는 장은 취약 신호인 경우가 많습니다."},
+    {no:"04",title:"반도체",codes:"005930 · 000660",tag:"외인 수급의 프록시",body:"코스피 시총 1·2위이자 외국인 순매수가 가장 집중되는 종목이라, 사실상 외국인 수급의 대리지표이고 이 둘이 코스피를 끌고 갑니다. 특히 SK하이닉스는 HBM/AI 노출도가 높아, 삼성전자 대비 상대강도를 보면 AI 사이클의 강도를 읽을 수 있습니다."},
+    {no:"05",title:"지수",codes:"KOSPI · KOSDAQ",tag:"결과",body:"코스피는 대형·수출주 중심이라 외국인 수급과 환율에 민감하고, 코스닥은 중소형·성장주에 개인 비중이 높아 국내 유동성과 위험선호에 민감합니다. 둘의 상대강도가 지금 시장 스타일(대형 vs 중소형)을 알려줍니다."},
+  ];
+  const insights=[
+    {q:"외국인 수급을 미리 가늠한다",a:"환율과 한미 금리차가 방향을 틀면 외인 매매도 뒤따라오는 경우가 많습니다. 환율·금리를 외인 수급의 선행지표로 활용할 수 있습니다."},
+    {q:"상승의 '질'을 판별한다",a:"같은 상승이라도 외국인+반도체가 이끄는 상승은 지속력이 있고, 개인이 홀로 받치는 상승은 취약합니다. 주체별 순매수로 구분됩니다."},
+    {q:"시장 국면을 한눈에 본다",a:"금리 안정·유가 적정·환율 하락·외인 매수·반도체 강세가 겹치면 Risk-on, 반대 조합이면 Risk-off. 여러 지표가 같은 신호를 낼 때 신뢰도가 높습니다."},
+    {q:"환율의 이중성에 주의한다",a:"원화 약세는 삼성전자 같은 수출주 실적엔 우호적이지만, 외국인 수급엔 악재입니다. 이 괴리(단기 수급 vs 중기 펀더멘털)가 벌어질 때가 오히려 매매 타이밍 힌트가 됩니다."},
+    {q:"반도체 사이클 ≒ 코스피 사이클",a:"삼성·하이닉스가 코스피 방향을 사실상 결정합니다. AI 국면에서는 하이닉스 상대강도가 시장 온도계 역할을 합니다."},
+  ];
+  document.getElementById('chain').innerHTML=nodes.map((n,i)=>`
+    <div class="node" data-i="${i}">
+      <button class="node-head" onclick="toggleNode(${i})">
+        <span class="layer-no">${n.no}</span>
+        <span class="node-title"><strong>${n.title}</strong><span class="codes">${n.codes}</span></span>
+        <span class="chev">▸</span></button>
+      <div class="node-body"><div class="node-body-inner"><span class="tag">${n.tag}</span><br>${n.body}</div></div>
+    </div>`).join('');
+  document.getElementById('insights').innerHTML=insights.map((it,i)=>`
+    <div class="ins-item" data-i="${i}">
+      <button class="ins-q" onclick="toggleIns(${i})"><span class="ins-n">0${i+1}</span>
+        <strong>${it.q}</strong><span class="chev">▸</span></button>
+      <div class="ins-a"><div class="ins-a-inner">${it.a}</div></div>
+    </div>`).join('');
+  function toggleNode(i){const el=document.querySelector(`.node[data-i="${i}"]`);const b=el.querySelector('.node-body');
+    const o=el.classList.toggle('open');b.style.maxHeight=o?b.scrollHeight+'px':0;}
+  function toggleIns(i){const el=document.querySelector(`.ins-item[data-i="${i}"]`);const a=el.querySelector('.ins-a');
+    const o=el.classList.toggle('open');a.style.maxHeight=o?a.scrollHeight+'px':0;}
+  function setDir(d){document.body.setAttribute('data-dir',d);}
+
+  // ── 데이터 로드 ──
+  async function load(){
+    try{
+      const r=await fetch('./data.json',{cache:'no-store'});
+      if(!r.ok) throw new Error('data.json '+r.status);
+      const d=await r.json();
+      document.getElementById('hd-asof').textContent=`기준일 ${d.as_of} · 수집 ${Object.values(d.indicators).filter(v=>v.status==='ok').length}/${Object.keys(d.indicators).length}`;
+      renderPhase(d); renderIndicators(d);
+      setDir(d.phase.score<0?'off':'on');
+    }catch(e){
+      document.getElementById('hd-asof').textContent='데이터 없음';
+      document.getElementById('phase-wrap').innerHTML=`<div class="err">데이터를 불러오지 못했습니다 (${e.message}).<br>먼저 <code>python collect.py</code>로 <code>data.json</code>을 생성하세요.</div>`;
+    }
+  }
+  load();
+</script>
+</body>
+</html>

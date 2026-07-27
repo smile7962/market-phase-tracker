@@ -115,6 +115,13 @@ def main() -> None:
         json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     update_history(snapshot)
 
+    # 정적 웹(web/)이 fetch로 바로 읽도록 복사 — GitHub Pages 배포 대상
+    web_dir = Path(__file__).parent / "web"
+    if web_dir.exists():
+        for name in ("data.json", "history.json"):
+            (web_dir / name).write_text(
+                (DATA_DIR / name).read_text(encoding="utf-8"), encoding="utf-8")
+
     p = snapshot["phase"]
     ok = sum(1 for v in snapshot["indicators"].values() if v.get("status") == "ok")
     total = len(snapshot["indicators"])
