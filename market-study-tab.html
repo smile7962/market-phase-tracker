@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>지표 관계 학습</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E141C;          /* deep cool slate bg */
+    --ink-2:#131C27;        /* raised bg */
+    --surface:#182432;      /* card */
+    --surface-2:#1F2E3E;    /* card raised / expanded */
+    --line:#2A3B4D;         /* hairline */
+    --text:#E7EDF4;
+    --muted:#8A9AAD;
+    --faint:#5E6E80;
+    --on:#37D9AF;           /* risk-on : mint */
+    --on-dim:rgba(55,217,175,.14);
+    --off:#F2914A;          /* risk-off : amber */
+    --off-dim:rgba(242,145,74,.14);
+    --flow:#4C8FD6;         /* neutral capital flow */
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    letter-spacing:-0.01em;
+  }
+  .app{max-width:440px;margin:0 auto;min-height:100vh;
+    background:linear-gradient(180deg,#101925 0%,var(--ink) 34%);
+    padding:0 0 64px;position:relative;overflow:hidden}
+
+  /* ── header ── */
+  header{padding:28px 22px 18px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--flow);font-weight:600}
+  h1{font-size:29px;line-height:1.24;font-weight:800;letter-spacing:-0.03em;
+    margin:11px 0 10px}
+  h1 em{font-style:normal;color:var(--on)}
+  .lede{color:var(--muted);font-size:14.5px;max-width:32ch}
+
+  /* ── tab strip (앱 맥락) ── */
+  .tabs{display:flex;gap:5px;padding:4px 22px 0;margin-top:20px}
+  .tab{flex:1;text-align:center;font-size:12.5px;font-weight:600;color:var(--faint);
+    padding:11px 0 13px;border-bottom:1.5px solid var(--line);
+    font-family:var(--mono);letter-spacing:.04em}
+  .tab.active{color:var(--text);border-bottom-color:var(--on)}
+
+  /* ── section frame ── */
+  section{padding:30px 22px 4px}
+  .sec-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:14px;
+    display:flex;align-items:center;gap:9px}
+  .sec-label::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* ── direction toggle ── */
+  .toggle{display:flex;background:var(--ink-2);border:1px solid var(--line);
+    border-radius:13px;padding:4px;gap:4px;margin-bottom:22px}
+  .toggle button{flex:1;border:0;background:transparent;color:var(--muted);
+    font-family:var(--sans);font-weight:700;font-size:13.5px;padding:11px 0;
+    border-radius:9px;cursor:pointer;transition:all .25s ease;letter-spacing:-0.01em}
+  .toggle button .dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+    margin-right:7px;vertical-align:middle;background:currentColor;opacity:.9}
+  body[data-dir="on"]  .toggle button.on {background:var(--on-dim);color:var(--on)}
+  body[data-dir="off"] .toggle button.off{background:var(--off-dim);color:var(--off)}
+
+  /* ── the chain (signature) ── */
+  .chain{position:relative;padding-left:34px}
+  .chain::before{content:"";position:absolute;left:15px;top:14px;bottom:14px;width:2px;
+    background:linear-gradient(180deg,var(--flow),var(--flow));border-radius:2px;
+    transition:background .4s ease}
+  body[data-dir="on"]  .chain::before{background:linear-gradient(180deg,#2C4A63,var(--on))}
+  body[data-dir="off"] .chain::before{background:linear-gradient(180deg,var(--off),#3A2C22)}
+
+  .node{position:relative;margin-bottom:11px}
+  .node::before{content:"";position:absolute;left:-27px;top:20px;width:12px;height:12px;
+    border-radius:50%;background:var(--ink);border:2.5px solid var(--flow);
+    transition:border-color .4s ease,box-shadow .4s ease;z-index:2}
+  body[data-dir="on"]  .node::before{border-color:var(--on);box-shadow:0 0 0 4px var(--on-dim)}
+  body[data-dir="off"] .node::before{border-color:var(--off);box-shadow:0 0 0 4px var(--off-dim)}
+
+  .node-head{width:100%;text-align:left;background:var(--surface);
+    border:1px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;
+    display:flex;align-items:center;gap:12px;transition:background .2s,border-color .2s}
+  .node-head:hover{border-color:#38516A}
+  .node.open .node-head{background:var(--surface-2);border-color:#3B566F;
+    border-bottom-left-radius:0;border-bottom-right-radius:0}
+  .layer-no{font-family:var(--mono);font-size:12px;color:var(--faint);font-weight:600;
+    min-width:22px}
+  .node-title{flex:1}
+  .node-title strong{display:block;font-size:15.5px;font-weight:700;letter-spacing:-0.02em}
+  .node-title .codes{font-family:var(--mono);font-size:11px;color:var(--muted);
+    letter-spacing:.02em;margin-top:2px}
+  .chev{color:var(--faint);font-size:13px;transition:transform .3s ease}
+  .node.open .chev{transform:rotate(90deg)}
+
+  .node-body{max-height:0;overflow:hidden;background:var(--surface-2);
+    border:1px solid #3B566F;border-top:0;border-radius:0 0 14px 14px;
+    transition:max-height .34s cubic-bezier(.4,0,.2,1)}
+  .node-body-inner{padding:2px 16px 17px;font-size:14px;color:#C6D2E0}
+  .node-body-inner .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;
+    color:var(--flow);border:1px solid var(--line);border-radius:6px;
+    padding:2px 7px;margin-bottom:10px;letter-spacing:.05em}
+
+  /* ── narrative line ── */
+  .flow-narr{margin-top:20px;background:var(--ink-2);border:1px solid var(--line);
+    border-radius:14px;padding:17px 17px 18px;position:relative;overflow:hidden}
+  .flow-narr .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+  .flow-narr p{font-size:14.5px;line-height:1.7;font-weight:500}
+  .flow-narr .hl{font-weight:700}
+  body[data-dir="on"]  .flow-narr .hl{color:var(--on)}
+  body[data-dir="off"] .flow-narr .hl{color:var(--off)}
+  .flow-narr .edge{position:absolute;left:0;top:0;bottom:0;width:3px;transition:background .4s}
+  body[data-dir="on"]  .flow-narr .edge{background:var(--on)}
+  body[data-dir="off"] .flow-narr .edge{background:var(--off)}
+
+  /* ── insights accordion ── */
+  .ins{border-top:1px solid var(--line)}
+  .ins-item{border-bottom:1px solid var(--line)}
+  .ins-q{width:100%;text-align:left;background:transparent;border:0;cursor:pointer;
+    color:var(--text);padding:17px 2px;display:flex;gap:13px;align-items:baseline;
+    font-family:var(--sans)}
+  .ins-n{font-family:var(--mono);font-size:12px;color:var(--on);font-weight:600;min-width:20px}
+  body[data-dir="off"] .ins-n{color:var(--off)}
+  .ins-q strong{flex:1;font-size:15px;font-weight:600;letter-spacing:-0.02em;line-height:1.5}
+  .ins-q .chev{align-self:center}
+  .ins-a{max-height:0;overflow:hidden;transition:max-height .34s cubic-bezier(.4,0,.2,1)}
+  .ins-a-inner{padding:0 2px 18px 35px;font-size:14px;color:#C4D0DE;line-height:1.72}
+  .ins-item.open .chev{transform:rotate(90deg)}
+
+  /* ── caveat ── */
+  .caveat{margin:26px 22px 0;background:var(--off-dim);border:1px solid rgba(242,145,74,.28);
+    border-radius:14px;padding:16px 17px}
+  .caveat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--off);margin-bottom:8px;font-weight:600}
+  .caveat p{font-size:13.5px;line-height:1.7;color:#D9C4B2}
+
+  footer{text-align:center;padding:34px 22px 0;color:var(--faint);
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body data-dir="off">
+<div class="app">
+
+  <header>
+    <div class="eyebrow">STUDY · 지표 관계</div>
+    <h1>자본은 위에서<br>아래로 <em>흐른다</em></h1>
+    <p class="lede">10개 지표는 따로 놀지 않습니다. 매크로에서 지수까지 하나의 인과 사슬로 이어져요. 매일 국면을 읽기 전에, 그 원리부터.</p>
+  </header>
+
+  <nav class="tabs" aria-label="앱 탭 (미리보기)">
+    <div class="tab">국면</div>
+    <div class="tab">지표</div>
+    <div class="tab active">학습</div>
+  </nav>
+
+  <section>
+    <div class="sec-label">인과 사슬 · The Chain</div>
+
+    <div class="toggle" role="group" aria-label="시장 방향 전환">
+      <button class="off" onclick="setDir('off')"><span class="dot"></span>Risk-off · 위험회피</button>
+      <button class="on" onclick="setDir('on')"><span class="dot"></span>Risk-on · 위험선호</button>
+    </div>
+
+    <div class="chain" id="chain">
+      <!-- nodes injected -->
+    </div>
+
+    <div class="flow-narr">
+      <span class="edge"></span>
+      <div class="k">한 문장 흐름</div>
+      <p id="narr"></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">읽어낼 수 있는 것 · Insights</div>
+    <div class="ins" id="insights"></div>
+  </section>
+
+  <div class="caveat">
+    <div class="k">⚠ 유의</div>
+    <p>이 관계들이 항상 기계적으로 작동하진 않습니다. 위기 국면에선 안전자산인 달러·미국채가 동반 강세로 뒤집히기도 하죠. 그래서 지표 하나가 아니라 <b style="color:#F0C9A8">여러 지표가 같은 방향</b>을 가리킬 때 신뢰도가 올라갑니다.</p>
+  </div>
+
+  <footer>지표 관계 학습 · 프로토타입</footer>
+</div>
+
+<script>
+  const nodes = [
+    { no:"01", title:"매크로", codes:"US 10Y · WTI", tag:"최상류 원인",
+      body:"미국채 10년 금리는 전 세계 위험선호·유동성의 기준점, WTI는 인플레 압력과 글로벌 수요의 바로미터입니다. 유가가 오르면 인플레 우려로 금리 상승 압력이 생기고, 한국은 원유 수입국이라 유가 상승 자체가 무역수지 악화 → 원화 약세 요인이 됩니다." },
+    { no:"02", title:"환율 · 금리", codes:"USD/KRW · KR 3Y", tag:"자본의 방향",
+      body:"핵심은 한미 금리차입니다. 미국 금리가 한국보다 벌어지면 자본이 미국으로 이동 → 원화 약세(환율 상승). 국채 3년 금리는 한국은행 기준금리 방향(통화정책 기대)을 반영하는 지표라, 미국채 10년과 대비해 보면 돈이 어디로 흐를지 읽힙니다." },
+    { no:"03", title:"수급", codes:"외국인 · 기관 · 개인", tag:"주도 세력",
+      body:"환율과 외국인 매매는 역의 관계입니다. 원화가 강세면 환차익까지 노려 매수, 약세면 환차손 우려로 매도하는 경향이 있죠. 주체별로 보면 누가 시장을 이끄는지 보입니다 — 외국인+기관이 같은 방향이면 추세가 강하고, 개인만 홀로 받치는 장은 취약 신호인 경우가 많습니다." },
+    { no:"04", title:"반도체", codes:"005930 · 000660", tag:"외인 수급의 프록시",
+      body:"코스피 시총 1·2위이자 외국인 순매수가 가장 집중되는 종목이라, 사실상 외국인 수급의 대리지표이고 이 둘이 코스피를 끌고 갑니다. 특히 SK하이닉스는 HBM/AI 노출도가 높아, 삼성전자 대비 상대강도를 보면 AI 사이클의 강도를 읽을 수 있습니다." },
+    { no:"05", title:"지수", codes:"KOSPI · KOSDAQ", tag:"결과",
+      body:"코스피는 대형·수출주 중심이라 외국인 수급과 환율에 민감하고, 코스닥은 중소형·성장주에 개인 비중이 높아 국내 유동성과 위험선호에 민감합니다. 둘의 상대강도가 지금 시장 스타일(대형 vs 중소형)을 알려줍니다." },
+  ];
+
+  const insights = [
+    { q:"외국인 수급을 미리 가늠한다", a:"환율과 한미 금리차가 방향을 틀면 외인 매매도 뒤따라오는 경우가 많습니다. 환율·금리를 외인 수급의 선행지표로 활용할 수 있습니다." },
+    { q:"상승의 '질'을 판별한다", a:"같은 상승이라도 외국인+반도체가 이끄는 상승은 지속력이 있고, 개인이 홀로 받치는 상승은 취약합니다. 주체별 순매수로 구분됩니다." },
+    { q:"시장 국면을 한눈에 본다", a:"금리 안정·유가 적정·환율 하락·외인 매수·반도체 강세가 겹치면 Risk-on, 반대 조합이면 Risk-off. 여러 지표가 같은 신호를 낼 때 신뢰도가 높습니다." },
+    { q:"환율의 이중성에 주의한다", a:"원화 약세는 삼성전자 같은 수출주 실적엔 우호적이지만, 외국인 수급엔 악재입니다. 이 괴리(단기 수급 vs 중기 펀더멘털)가 벌어질 때가 오히려 매매 타이밍 힌트가 됩니다." },
+    { q:"반도체 사이클 ≒ 코스피 사이클", a:"삼성·하이닉스가 코스피 방향을 사실상 결정합니다. AI 국면에서는 하이닉스 상대강도가 시장 온도계 역할을 합니다." },
+  ];
+
+  const narratives = {
+    off:'미국채 10년<span class="hl"> ↑</span> + WTI<span class="hl"> ↑</span> → 인플레·긴축 우려 → 달러 강세 → 원달러<span class="hl"> ↑</span> → 외인 <span class="hl">순매도</span> → 삼성·하이닉스 하락 → 코스피 <span class="hl">하락</span>',
+    on:'미국 금리 <span class="hl">안정</span> + 원화 <span class="hl">강세</span> → 외인 <span class="hl">순매수</span> → 반도체 매수 → 삼성·하이닉스 상승 → 코스피 <span class="hl">상승</span>'
+  };
+
+  // build chain
+  const chain = document.getElementById('chain');
+  chain.innerHTML = nodes.map((n,i)=>`
+    <div class="node" data-i="${i}">
+      <button class="node-head" onclick="toggleNode(${i})" aria-expanded="false">
+        <span class="layer-no">${n.no}</span>
+        <span class="node-title"><strong>${n.title}</strong><span class="codes">${n.codes}</span></span>
+        <span class="chev">▸</span>
+      </button>
+      <div class="node-body"><div class="node-body-inner">
+        <span class="tag">${n.tag}</span><br>${n.body}
+      </div></div>
+    </div>`).join('');
+
+  // build insights
+  const ins = document.getElementById('insights');
+  ins.innerHTML = insights.map((it,i)=>`
+    <div class="ins-item" data-i="${i}">
+      <button class="ins-q" onclick="toggleIns(${i})" aria-expanded="false">
+        <span class="ins-n">0${i+1}</span>
+        <strong>${it.q}</strong>
+        <span class="chev">▸</span>
+      </button>
+      <div class="ins-a"><div class="ins-a-inner">${it.a}</div></div>
+    </div>`).join('');
+
+  function toggleNode(i){
+    const el = chain.querySelector(`.node[data-i="${i}"]`);
+    const body = el.querySelector('.node-body');
+    const open = el.classList.toggle('open');
+    el.querySelector('.node-head').setAttribute('aria-expanded', open);
+    body.style.maxHeight = open ? body.scrollHeight + 'px' : 0;
+  }
+  function toggleIns(i){
+    const el = ins.querySelector(`.ins-item[data-i="${i}"]`);
+    const a = el.querySelector('.ins-a');
+    const open = el.classList.toggle('open');
+    el.querySelector('.ins-q').setAttribute('aria-expanded', open);
+    a.style.maxHeight = open ? a.scrollHeight + 'px' : 0;
+  }
+  function setDir(d){
+    document.body.setAttribute('data-dir', d);
+    document.getElementById('narr').innerHTML = narratives[d];
+  }
+  setDir('off'); // 기본: 위험회피 시나리오로 시작
+</script>
+</body>
+</html>
