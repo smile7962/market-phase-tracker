@@ -20,10 +20,10 @@
 | 코스피·코스닥·삼성·하이닉스·환율·WTI | FinanceDataReader (키 불필요) | ✅ 정상 수집 |
 | 미국채 10년 | FDR `US10YT=RR` | ❌ 404 → **FRED(DGS10)로 확정**, 키 필요 |
 | 국채 3년 | ECOS | ⏳ 키 발급 후 (통계코드 `817Y002/D/010200000` 후보, 실측 검증 필요) |
-| 투자자 순매수(외인/기관/개인) | pykrx (KRX) | ❌ **차단** — 이 환경 egress에서 KRX가 로그인 세션 요구(403/"LOGOUT"). Naver Finance는 도달 가능(200) |
+| 투자자 순매수(외인/기관/개인) | pykrx (KRX) → **Naver 폴백** | ✅ **Naver Finance로 해결**(키 불필요). KRX 직접 스크래핑은 이 환경에서 차단(403/"LOGOUT")이라 `investorDealTrendDay.naver`(sosok=01, 단위 억원)로 우회 |
 
 - **패키지명 주의**: PyPI 배포명은 `finance-datareader`(하이픈), import는 `FinanceDataReader`.
-- **투자자 순매수 결정 필요**: (a) KRX 계정으로 pykrx 로그인, (b) Naver Finance 스크래핑, (c) 외인 순매수를 환율·반도체로 간접 추정. → 별도 결정.
+- **투자자 순매수 결정 완료**: Naver Finance 폴백 구현(`src/sources._investor_naver`). KRX_ID/KRX_PW가 있으면 pykrx를 먼저 시도하고, 없으면 Naver로 폴백 → 자동화 환경에서도 키 없이 동작.
 
 ---
 

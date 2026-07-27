@@ -64,9 +64,8 @@
 > 확정 결정 — 배포는 **GitHub Pages**, 데이터는 **키 불필요 소스(pykrx·FDR) 우선** 후 ECOS/FRED 연결.
 
 - [x] Phase 0 — 학습 탭 프로토타입 (`market-study-tab.html`)
-- [~] **Phase 1 — 데이터 스파이크 (진행 중)**: `collect.py`로 키 불필요 6개 지표(코스피·코스닥·삼성·하이닉스·환율·WTI) 수집 + `data/data.json`·`history.json` 생성 성공. 발견: FDR 동작 / 미국채10년은 FRED 필요 / **KRX(투자자 순매수)는 이 환경에서 차단 → 대안 결정 필요**. 상세는 `docs/PLAN.md`.
-  - [ ] Phase 1-B: ECOS 국채3년 + FRED 미국채10년 (키 발급 후)
-  - [ ] 투자자 순매수 소스 결정 (KRX 계정 vs Naver vs 간접 추정)
+- [x] **Phase 1 — 데이터 스파이크**: `collect.py`로 **9/11 지표** 수집 + `data/data.json`·`history.json` 생성. 키 불필요(FDR): 코스피·코스닥·삼성·하이닉스·환율·WTI. 투자자 순매수(외인/기관/개인)는 **Naver Finance 폴백**(키 불필요)으로 수집. 발견: KRX 직접 스크래핑은 이 환경에서 차단 → Naver로 우회. 상세는 `docs/PLAN.md`.
+  - [ ] Phase 1-B: ECOS 국채3년 + FRED 미국채10년 (키 발급 후) — 남은 2개
 - [x] Phase 2 — 정적 국면/지표 화면 (`web/index.html`): 3탭(국면·지표·학습) SPA, `data.json` 소비. 국면 배지+게이지+한줄요약, 지표 카드(값·전일대비·SVG 스파크라인·Risk 색), 학습 탭 프로토타입 이식.
 - [~] Phase 3 — 국면 엔진 고도화(가중치·추세·신뢰도) + 인과 사슬 뷰 + 국면 타임라인. *잠정 엔진은 `src/engine.py`에 구현됨; 가중치·임계값 튜닝은 실데이터 수 일 축적 후.*
 - [x] Phase 4 — PWA화(`web/manifest.webmanifest`·`web/sw.js`·아이콘, 설치·오프라인) + GitHub Actions 자동화(`.github/workflows/collect.yml`, 평일 16:30 KST → 수집·커밋·Pages 배포)

@@ -92,15 +92,11 @@ def kr3y(as_of):
         return None
 
 
-def investor_net(as_of):
-    """주체별(외국인/기관/개인) 순매수 거래대금.
+def _investor_pykrx(as_of):
+    """KRX 계정(KRX_ID/KRX_PW)이 있을 때 pykrx로 수집. 실패/무자격이면 None.
 
-    ⚠ 데이터 스파이크 발견(2026-07): 이 실행 환경의 egress IP에서 KRX
-    data.krx.co.kr 이 로그인 세션을 요구(403 / "LOGOUT")해 pykrx가 실패한다.
-    KRX_ID/KRX_PW 가 있으면 pykrx 로그인으로 재시도한다. 없으면 None.
-    (대안: Naver Finance 스크래핑 — 별도 결정 필요.)
-
-    반환: {"foreign": float, "institution": float, "individual": float} (순매수 원)
+    ⚠ 데이터 스파이크 발견(2026-07): 자격증명이 없는 egress IP에서 KRX
+    data.krx.co.kr 이 로그인 세션을 요구(403/"LOGOUT")해 pykrx가 실패한다.
     """
     kid, kpw = os.getenv("KRX_ID"), os.getenv("KRX_PW")
     if not (kid and kpw):
@@ -109,7 +105,6 @@ def investor_net(as_of):
         from pykrx import stock
         d = as_of.strftime("%Y%m%d")
         df = stock.get_market_trading_value_by_investor(d, d, "KOSPI")
-        # 반환 형식은 로그인 성공 후 실측으로 컬럼명 확정 필요
         col = "순매수" if "순매수" in df.columns else df.columns[-1]
         return {
             "foreign": float(df.loc["외국인", col]),
@@ -119,3 +114,58 @@ def investor_net(as_of):
         }
     except Exception:
         return None
+
+
+def _investor_naver(as_of):
+    """Naver Finance 투자자별 매매동향(키 불필요) 폴백.
+
+    finance.naver.com/sise/investorDealTrendDay.naver — KOSPI(sosok=01) 일별
+    순매수 표(단위: 억원). as_of 날짜 행을 찾고, 없으면 최신 행을 쓴다.
+    반환: {"foreign","institution","individual","source":"naver","as_of":...}
+    (값은 원 단위로 환산: 억원 × 1e8)
+    """
+    import re
+    import requests
+
+    ua = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+          "(KHTML, like Gecko) Chrome/120.0 Safari/537.36")
+    url = ("https://finance.naver.com/sise/investorDealTrendDay.naver"
+           f"?bizdate={as_of.strftime('%Y%m%d')}&sosok=01")
+    try:
+        r = requests.get(url, headers={"User-Agent": ua}, timeout=20)
+        html = r.content.decode("euc-kr", errors="replace")
+    except Exception:
+        return None
+
+    m = re.search(r"<table.*?</table>", html, re.S)
+    if not m:
+        return None
+    cells = [re.sub(r"<[^>]+>", "", c).strip()
+             for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", m.group(0), re.S)]
+    cells = [c for c in cells if c]
+
+    # 헤더: 날짜 개인 외국인 기관계 ... → 데이터 행은 'YY.MM.DD' 로 시작
+    def num(s):
+        return float(s.replace(",", "").replace("&nbsp;", "") or 0)
+
+    want = as_of.strftime("%y.%m.%d")
+    rows = []
+    for i, c in enumerate(cells):
+        if re.fullmatch(r"\d{2}\.\d{2}\.\d{2}", c):
+            rows.append((c, cells[i + 1:i + 4]))  # 개인, 외국인, 기관계
+    if not rows:
+        return None
+    date, vals = next((r for r in rows if r[0] == want), rows[0])
+    try:
+        indiv, foreign, inst = (num(vals[0]), num(vals[1]), num(vals[2]))
+    except Exception:
+        return None
+    return {
+        "foreign": foreign * 1e8, "institution": inst * 1e8, "individual": indiv * 1e8,
+        "source": "naver", "as_of": "20" + date.replace(".", ""),
+    }
+
+
+def investor_net(as_of):
+    """주체별(외국인/기관/개인) 순매수. KRX 계정이 있으면 pykrx, 없으면 Naver 폴백."""
+    return _investor_pykrx(as_of) or _investor_naver(as_of)

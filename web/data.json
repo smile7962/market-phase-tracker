@@ -1,6 +1,6 @@
 {
   "as_of": "2026-07-27",
-  "generated_at": "2026-07-27T14:14:39+00:00",
+  "generated_at": "2026-07-27T14:24:01+00:00",
   "indicators": {
     "us10y": {
       "label": "미국채 10년",
@@ -204,30 +204,33 @@
     },
     "foreign": {
       "label": "외국인 순매수",
-      "status": "missing"
+      "status": "ok",
+      "signal": -1,
+      "value": -2881100000000
     },
     "institution": {
       "label": "기관 순매수",
-      "status": "missing"
+      "status": "ok",
+      "signal": 1,
+      "value": 859500000000
     },
     "individual": {
       "label": "개인 순매수",
-      "status": "missing"
+      "status": "ok",
+      "signal": 1,
+      "value": 1978800000000
     }
   },
   "phase": {
-    "score": 33,
-    "label": "위험선호 확장",
-    "color": "green",
+    "score": -6,
+    "label": "경계",
+    "color": "amber",
     "confidence": 1,
-    "total": 1
+    "total": 2
   },
-  "narrative": "미국 금리 안정 + 원화 강세 → 외인 순매수 → 반도체 매수 → 삼성·하이닉스 상승 → 코스피 상승 우호",
+  "narrative": "미국채·유가 상승 → 달러 강세 → 원달러 상승 → 외인 순매도 → 삼성·하이닉스 하락 → 코스피 하락 압력",
   "missing": [
     "us10y",
-    "kr3y",
-    "foreign",
-    "institution",
-    "individual"
+    "kr3y"
   ]
 }
