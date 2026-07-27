@@ -11,7 +11,19 @@
 
 ## 현재 위치
 - ✅ **Phase 0** — 학습 탭 프로토타입(`market-study-tab.html`), 저장소 초기화, 이 계획 문서.
-- ⏭️ **다음** — Phase 1 데이터 스파이크 (가장 불확실 → 여기부터).
+- 🟡 **Phase 1 진행 중** — `collect.py`로 키 불필요 6개 지표 수집 + 첫 `data.json`/`history.json` 생성 성공.
+- ⏭️ **다음** — Phase 1-B(키 발급 후 국채3년·미국채10년), 그리고 투자자 순매수 대안 결정.
+
+### Phase 1 데이터 스파이크 발견 (2026-07)
+| 지표 | 소스 | 결과 |
+|---|---|---|
+| 코스피·코스닥·삼성·하이닉스·환율·WTI | FinanceDataReader (키 불필요) | ✅ 정상 수집 |
+| 미국채 10년 | FDR `US10YT=RR` | ❌ 404 → **FRED(DGS10)로 확정**, 키 필요 |
+| 국채 3년 | ECOS | ⏳ 키 발급 후 (통계코드 `817Y002/D/010200000` 후보, 실측 검증 필요) |
+| 투자자 순매수(외인/기관/개인) | pykrx (KRX) | ❌ **차단** — 이 환경 egress에서 KRX가 로그인 세션 요구(403/"LOGOUT"). Naver Finance는 도달 가능(200) |
+
+- **패키지명 주의**: PyPI 배포명은 `finance-datareader`(하이픈), import는 `FinanceDataReader`.
+- **투자자 순매수 결정 필요**: (a) KRX 계정으로 pykrx 로그인, (b) Naver Finance 스크래핑, (c) 외인 순매수를 환율·반도체로 간접 추정. → 별도 결정.
 
 ---
 
