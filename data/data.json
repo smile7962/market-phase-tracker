@@ -1,11 +1,7 @@
 {
   "as_of": "2026-07-27",
-  "generated_at": "2026-07-27T14:24:01+00:00",
+  "generated_at": "2026-07-27T14:30:47+00:00",
   "indicators": {
-    "us10y": {
-      "label": "미국채 10년",
-      "status": "missing"
-    },
     "wti": {
       "label": "WTI 유가",
       "status": "ok",
@@ -69,10 +65,6 @@
         1474.04,
         1469.98
       ]
-    },
-    "kr3y": {
-      "label": "국채 3년",
-      "status": "missing"
     },
     "samsung": {
       "label": "삼성전자",
@@ -219,6 +211,14 @@
       "status": "ok",
       "signal": 1,
       "value": 1978800000000
+    },
+    "us10y": {
+      "label": "미국채 10년",
+      "status": "missing"
+    },
+    "kr3y": {
+      "label": "국채 3년",
+      "status": "missing"
     }
   },
   "phase": {

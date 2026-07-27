@@ -81,6 +81,31 @@
   .narr .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
     text-transform:uppercase;color:var(--faint);margin-bottom:7px}
 
+  /* 국면 타임라인 */
+  .block{margin-top:20px}
+  .block-t{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--faint);margin-bottom:11px;display:flex;justify-content:space-between;align-items:baseline}
+  .block-t span{color:var(--muted);letter-spacing:0;font-size:11px;text-transform:none}
+  .timeline{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 14px 10px}
+  .timeline svg{display:block;width:100%;height:120px;overflow:visible}
+  .tl-x{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;
+    color:var(--faint);margin-top:6px;padding:0 2px}
+
+  /* 실시간 인과 사슬 */
+  .live-chain{display:flex;align-items:stretch;gap:0;background:var(--surface);
+    border:1px solid var(--line);border-radius:16px;padding:15px 10px}
+  .lc-node{flex:1;text-align:center;position:relative;padding:0 2px}
+  .lc-node .ic{width:34px;height:34px;border-radius:11px;margin:0 auto 7px;display:flex;
+    align-items:center;justify-content:center;font-size:15px;border:1.5px solid var(--line);
+    background:var(--ink-2);transition:.3s}
+  .lc-node.on .ic{border-color:var(--on);background:var(--on-dim);box-shadow:0 0 0 3px var(--on-dim)}
+  .lc-node.off .ic{border-color:var(--off);background:var(--off-dim);box-shadow:0 0 0 3px var(--off-dim)}
+  .lc-node .nm{font-size:11px;font-weight:700;letter-spacing:-0.02em}
+  .lc-node .st{font-family:var(--mono);font-size:9px;margin-top:2px;color:var(--faint)}
+  .lc-node.on .st{color:var(--on)} .lc-node.off .st{color:var(--off)}
+  .lc-node:not(:last-child)::after{content:"→";position:absolute;right:-7px;top:9px;
+    color:var(--faint);font-size:13px;z-index:2}
+
   /* 지표 탭 */
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
@@ -167,6 +192,16 @@
   <div class="panel active" id="p-phase">
     <div class="sec-label">오늘의 국면 · Phase</div>
     <div id="phase-wrap"></div>
+
+    <div class="block">
+      <div class="block-t">실시간 인과 사슬 <span>오늘 신호의 흐름</span></div>
+      <div class="live-chain" id="live-chain"></div>
+    </div>
+
+    <div class="block">
+      <div class="block-t">국면 타임라인 <span id="tl-range"></span></div>
+      <div class="timeline" id="timeline"></div>
+    </div>
   </div>
 
   <!-- 지표 -->
@@ -223,6 +258,56 @@
         <div class="conf">동조 지표 <b>${p.confidence}</b> / ${p.total} · 신뢰도 지표</div>
         <div class="narr"><div class="k">한 문장 흐름</div>${d.narrative}</div>
       </div>`;
+  }
+
+  // ── 실시간 인과 사슬 ──
+  const CHAIN_LAYERS = [
+    {nm:'매크로', ic:'🌐', keys:['us10y','wti']},
+    {nm:'환율·금리', ic:'💱', keys:['usdkrw','kr3y']},
+    {nm:'수급', ic:'🏦', keys:['foreign','institution','individual']},
+    {nm:'반도체', ic:'🔩', keys:['samsung','hynix']},
+    {nm:'지수', ic:'📈', keys:['kospi','kosdaq']},
+  ];
+  function renderLiveChain(ind){
+    document.getElementById('live-chain').innerHTML = CHAIN_LAYERS.map(L=>{
+      const sigs = L.keys.map(k=>ind[k]).filter(v=>v&&v.status==='ok').map(v=>v.signal||0);
+      const sum = sigs.reduce((a,b)=>a+b,0);
+      const cls = sum>0?'on':(sum<0?'off':'');
+      const st = sigs.length===0?'–':(sum>0?'ON':(sum<0?'OFF':'중립'));
+      return `<div class="lc-node ${cls}"><div class="ic">${L.ic}</div>
+        <div class="nm">${L.nm}</div><div class="st">${st}</div></div>`;
+    }).join('');
+  }
+
+  // ── 국면 타임라인 ──
+  function renderTimeline(history){
+    const el=document.getElementById('timeline');
+    if(!history||history.length<2){el.innerHTML='<div style="color:var(--faint);font-size:12px;padding:8px">이력이 더 쌓이면 국면 추이가 표시됩니다.</div>';return;}
+    const h=history.slice(-30), w=300, ht=110, pad=4;
+    const x=i=>pad+i/(h.length-1)*(w-2*pad);
+    const y=s=>ht/2 - (s/100)*(ht/2-6);   // -100..100 → 하단..상단
+    // phase band backgrounds
+    const bands=[['#37D9AF',30,100],['#E9C46A',0,30],['#F2914A',-30,0],['#EF5F6B',-100,-30]];
+    const bandRects=bands.map(([c,lo,hi])=>{
+      const yt=y(hi),yb=y(lo);return `<rect x="0" y="${yt}" width="${w}" height="${yb-yt}" fill="${c}" opacity="0.06"/>`;
+    }).join('');
+    const line=h.map((d,i)=>`${x(i).toFixed(1)},${y(d.score).toFixed(1)}`).join(' ');
+    const area=`${x(0).toFixed(1)},${y(0)} ${line} ${x(h.length-1).toFixed(1)},${y(0)}`;
+    const dots=h.map((d,i)=>{const c=COLOR[({green:'green',yellow:'yellow',amber:'amber',red:'red'})[0]];
+      const col=d.score>30?'#37D9AF':d.score>0?'#E9C46A':d.score>=-30?'#F2914A':'#EF5F6B';
+      return `<circle cx="${x(i).toFixed(1)}" cy="${y(d.score).toFixed(1)}" r="${i===h.length-1?3.4:2}" fill="${col}"/>`;
+    }).join('');
+    el.innerHTML=`<svg viewBox="0 0 ${w} ${ht}" preserveAspectRatio="none">
+      ${bandRects}
+      <line x1="0" y1="${y(0)}" x2="${w}" y2="${y(0)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>
+      <polygon points="${area}" fill="url(#g)" opacity="0.15"/>
+      <polyline points="${line}" fill="none" stroke="#8FA6BF" stroke-width="1.6" stroke-linejoin="round"/>
+      ${dots}
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#37D9AF"/><stop offset="1" stop-color="#EF5F6B"/></linearGradient></defs>
+    </svg>
+    <div class="tl-x"><span>${h[0].as_of.slice(5)}</span><span>${h[h.length-1].as_of.slice(5)}</span></div>`;
+    document.getElementById('tl-range').textContent=`최근 ${h.length}거래일`;
   }
 
   // ── 지표 카드 ──
@@ -309,8 +394,12 @@
       if(!r.ok) throw new Error('data.json '+r.status);
       const d=await r.json();
       document.getElementById('hd-asof').textContent=`기준일 ${d.as_of} · 수집 ${Object.values(d.indicators).filter(v=>v.status==='ok').length}/${Object.keys(d.indicators).length}`;
-      renderPhase(d); renderIndicators(d);
+      renderPhase(d); renderIndicators(d); renderLiveChain(d.indicators);
       setDir(d.phase.score<0?'off':'on');
+      try{
+        const hr=await fetch('./history.json',{cache:'no-store'});
+        renderTimeline(hr.ok ? await hr.json() : null);
+      }catch(_){ renderTimeline(null); }
     }catch(e){
       document.getElementById('hd-asof').textContent='데이터 없음';
       document.getElementById('phase-wrap').innerHTML=`<div class="err">데이터를 불러오지 못했습니다 (${e.message}).<br>먼저 <code>python collect.py</code>로 <code>data.json</code>을 생성하세요.</div>`;

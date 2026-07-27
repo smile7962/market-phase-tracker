@@ -39,7 +39,7 @@ python -m http.server -d web 8000 # http://localhost:8000
 - [x] Phase 0 학습 탭 프로토타입
 - [x] Phase 1 데이터 스파이크 (`collect.py`, 첫 `data.json`)
 - [x] Phase 2 3탭 웹앱 (`web/index.html`)
-- [~] Phase 3 국면 엔진 튜닝 (실데이터 축적 후) + 국면 타임라인
+- [~] Phase 3 인과 사슬 뷰 + 국면 타임라인 완료 · 엔진 가중치 튜닝만 남음
 - [x] Phase 4 PWA(manifest·service worker) + GitHub Actions 자동화
 
 자세한 내용과 데이터 스파이크 발견(예: 이 실행환경에서 KRX 차단)은 `docs/PLAN.md` 참조.
