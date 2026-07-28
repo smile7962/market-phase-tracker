@@ -36,7 +36,10 @@ jobs:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
           KRX_ID: ${{ secrets.KRX_ID }}
           KRX_PW: ${{ secrets.KRX_PW }}
-        run: python collect.py
+        run: |
+          echo "ECOS_API_KEY present: ${ECOS_API_KEY:+yes}"
+          echo "FRED_API_KEY present: ${FRED_API_KEY:+yes}"
+          python collect.py
 
       - name: Commit data if changed
         run: |
