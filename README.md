@@ -7,7 +7,7 @@
 
 ## 구조 (서버 없음)
 ```
-GitHub Actions cron(평일 16:30 KST)
+GitHub Actions cron(평일 20:00 KST)
   → collect.py (pykrx·FinanceDataReader·ECOS·FRED)
   → data/data.json · history.json 커밋 + web/ 복사
   → GitHub Pages 정적 배포 → 스마트폰에서 열람·설치(PWA)
@@ -32,7 +32,7 @@ python -m http.server -d web 8000 # http://localhost:8000
 1. Settings → Pages → **Source: GitHub Actions**.
 2. (선택) Settings → Secrets → Actions 에 `FRED_API_KEY`, `ECOS_API_KEY`,
    (그리고 KRX 계정 쓰면 `KRX_ID`/`KRX_PW`) 등록.
-3. `.github/workflows/collect.yml` 이 평일 16:30 KST 에 수집·커밋·배포.
+3. `.github/workflows/collect.yml` 이 평일 20:00 KST 에 수집·커밋·배포.
    (cron은 기본 브랜치에서만 발화 — 병합 후 자동. 그 전엔 Actions 탭에서 수동 실행.)
 
 ## 상태

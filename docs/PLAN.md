@@ -120,7 +120,7 @@ market-phase-tracker/
 
 ## Phase 4 — PWA + 자동화 (배포: GitHub Pages)
 - `manifest` + service worker(오프라인 캐시), 설치 가능화.
-- `.github/workflows/collect.yml`: 평일 16:30 KST cron → `collect.py` → `data/` 커밋 → Pages 재배포.
+- `.github/workflows/collect.yml`: 평일 20:00 KST cron → `collect.py` → `data/` 커밋 → Pages 재배포.
 - Secrets(ECOS·FRED) 주입. Pages는 저장소 Settings → Pages에서 브랜치/`web` 지정.
 
 ---

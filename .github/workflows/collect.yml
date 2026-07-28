@@ -1,10 +1,10 @@
 name: daily-collect
 
-# 평일 16:30 KST = 07:30 UTC. (schedule 이벤트는 기본 브랜치에서만 발화 —
-# 기본 브랜치 병합 후 자동 실행. 그 전엔 수동 실행(workflow_dispatch)으로 테스트.)
+# 평일 20:00 KST = 11:00 UTC. (schedule 이벤트는 기본 브랜치에서만 발화.
+# 수동 실행은 workflow_dispatch.)
 on:
   schedule:
-    - cron: "30 7 * * 1-5"
+    - cron: "0 11 * * 1-5"
   workflow_dispatch:
 
 permissions:
