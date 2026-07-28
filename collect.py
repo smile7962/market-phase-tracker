@@ -35,6 +35,17 @@ SERIES_SPEC = [
 ]
 
 
+def _load_previous() -> dict | None:
+    """직전 스냅샷(data/data.json) 로드. 없거나 깨졌으면 None."""
+    path = DATA_DIR / "data.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 def collect(as_of: datetime) -> dict:
     indicators: dict[str, dict] = {}
     signals: dict[str, int] = {}
@@ -68,6 +79,26 @@ def collect(as_of: datetime) -> dict:
                 signals["foreign"] = sig
             indicators[k] = {"label": lbl, "status": "ok", "signal": sig,
                              "value": round(val)}
+
+    # ── carry-forward: 이번 수집에서 실패한 지표는 직전 스냅샷의 마지막 정상값 유지 ──
+    # 소스가 일시적으로 실패하거나(예: ECOS 간헐 오류), 금리·수급처럼 장중엔 갱신되지
+    # 않는 지표가 "미수집"으로 사라지는 것을 방지한다. carried 값은 stale=True 로 표시.
+    prev = _load_previous()
+    if prev:
+        prev_ind = prev.get("indicators", {})
+        for key in list(indicators):
+            if indicators[key].get("status") == "missing":
+                pv = prev_ind.get(key)
+                if pv and pv.get("status") == "ok":
+                    carried = {k: v for k, v in pv.items() if k != "stale"}
+                    carried["stale"] = True
+                    indicators[key] = carried
+                    if key in missing:
+                        missing.remove(key)
+
+    # 점수는 (신선 + carried) ok 지표의 signal에서 다시 구성
+    signals = {k: v["signal"] for k, v in indicators.items()
+               if v.get("status") == "ok" and "signal" in v}
 
     phase = engine.score_and_phase(signals)
     # 실제 기준 거래일 = 코스피 시계열의 마지막 날짜(있으면)
