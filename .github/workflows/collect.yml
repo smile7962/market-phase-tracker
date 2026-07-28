@@ -1,9 +1,14 @@
 name: daily-collect
 
-# 평일 20:00 KST = 11:00 UTC. (schedule 이벤트는 기본 브랜치에서만 발화.
-# 수동 실행은 workflow_dispatch.)
+# 수집 스케줄 (schedule은 기본 브랜치에서만 발화, 수동은 workflow_dispatch):
+#  - 장중 30분 간격: 09:00~15:30 KST = 00:00~06:30 UTC (시세성 지표 준실시간 갱신)
+#  - 마감 확정   : 20:00 KST = 11:00 UTC (전 지표 확정 수집)
+# 매 실행마다 collect.py가 11개 지표를 새로 수집한다. 장중엔 시세(지수·주식·환율·WTI)가
+# 약 15~20분 지연으로 갱신되고, 금리(ECOS/FRED)·투자자 순매수(Naver)는 일 1회 확정이라
+# 장중에는 직전 확정값이 유지되다 마감 수집에서 확정된다.
 on:
   schedule:
+    - cron: "0,30 0-6 * * 1-5"
     - cron: "0 11 * * 1-5"
   workflow_dispatch:
 
