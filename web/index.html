@@ -37,6 +37,20 @@
     text-transform:uppercase;color:var(--flow);font-weight:600}
   h1{font-size:26px;line-height:1.24;font-weight:800;letter-spacing:-0.03em;margin:9px 0 4px}
   .asof{color:var(--faint);font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
+  .refresh{position:absolute;top:24px;right:20px;width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:background .2s,border-color .2s}
+  .refresh:hover{border-color:#38516A;color:var(--text)}
+  .refresh:active{transform:scale(.93)}
+  .refresh .ic{font-size:19px;line-height:1;display:inline-block}
+  .refresh.spin .ic{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(16px);
+    background:var(--surface-2);border:1px solid #3B566F;color:var(--text);
+    padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:50;max-width:88%;
+    box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* tab bar (하단 고정) */
   .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
@@ -183,6 +197,7 @@
 <body data-dir="off">
 <div class="app">
   <header>
+    <button class="refresh" id="btn-refresh" onclick="refresh()" aria-label="최신 자료 새로고침" title="최신 자료 새로고침"><span class="ic">⟳</span></button>
     <div class="eyebrow">MARKET PHASE</div>
     <h1 id="hd-title">시장 국면 트래커</h1>
     <div class="asof" id="hd-asof">불러오는 중…</div>
@@ -231,6 +246,7 @@
     <button onclick="showTab('ind',this)">지표</button>
     <button onclick="showTab('study',this)">학습</button>
   </nav>
+  <div class="toast" id="toast"></div>
 </div>
 
 <script>
@@ -387,10 +403,19 @@
     const o=el.classList.toggle('open');a.style.maxHeight=o?a.scrollHeight+'px':0;}
   function setDir(d){document.body.setAttribute('data-dir',d);}
 
+  // ── 토스트 ──
+  let toastTimer;
+  function showToast(msg){
+    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+  }
+
   // ── 데이터 로드 ──
-  async function load(){
+  let lastGen=null;
+  async function load(userInitiated){
     try{
-      const r=await fetch('./data.json',{cache:'no-store'});
+      const bust='?t='+Date.now();  // 캐시 우회 → 항상 최신 발표 자료
+      const r=await fetch('./data.json'+bust,{cache:'no-store'});
       if(!r.ok) throw new Error('data.json '+r.status);
       const d=await r.json();
       const okN=Object.values(d.indicators).filter(v=>v.status==='ok').length;
@@ -403,14 +428,31 @@
       renderPhase(d); renderIndicators(d); renderLiveChain(d.indicators);
       setDir(d.phase.score<0?'off':'on');
       try{
-        const hr=await fetch('./history.json',{cache:'no-store'});
+        const hr=await fetch('./history.json'+bust,{cache:'no-store'});
         renderTimeline(hr.ok ? await hr.json() : null);
       }catch(_){ renderTimeline(null); }
+      if(userInitiated){
+        const changed = lastGen && lastGen!==d.generated_at;
+        showToast(changed ? '새 자료로 갱신됐어요' : '이미 최신 자료예요');
+      }
+      lastGen=d.generated_at;
     }catch(e){
+      if(userInitiated){ showToast('불러오기 실패 — 잠시 후 다시'); return; }
       document.getElementById('hd-asof').textContent='데이터 없음';
       document.getElementById('phase-wrap').innerHTML=`<div class="err">데이터를 불러오지 못했습니다 (${e.message}).<br>먼저 <code>python collect.py</code>로 <code>data.json</code>을 생성하세요.</div>`;
     }
   }
+
+  // ── 새로고침 버튼 ──
+  async function refresh(){
+    const btn=document.getElementById('btn-refresh');
+    btn.classList.add('spin');
+    const started=Date.now();
+    await load(true);
+    // 스피너가 너무 짧게 깜빡이지 않도록 최소 500ms 유지
+    setTimeout(()=>btn.classList.remove('spin'), Math.max(0, 500-(Date.now()-started)));
+  }
+
   load();
 
   // ── PWA 서비스 워커 등록 ──
