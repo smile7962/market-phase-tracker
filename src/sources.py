@@ -49,17 +49,29 @@ def wti(as_of):     return _close_series("CL=F", as_of)
 # ── 키 필요 / 차단됨 (자격증명 없으면 None) ────────────────────────────
 
 def us10y(as_of):
-    """미국채 10년 (FRED DGS10). FRED_API_KEY 없으면 None → Phase 1-B."""
+    """미국채 10년 (FRED DGS10). FRED_API_KEY 없으면 None.
+
+    FRED REST API를 requests로 직접 호출(별도 fredapi 의존성 불필요). 미국장은
+    KST 대비 하루 지연이라 최신 관측일이 as_of보다 1영업일 앞설 수 있다.
+    """
     key = os.getenv("FRED_API_KEY")
     if not key:
         return None
     try:
-        # fredapi 미설치 환경도 있으므로 지연 import
-        from fredapi import Fred
-        fred = Fred(api_key=key)
+        import requests
         s, e = _range(as_of)
-        ser = fred.get_series("DGS10", observation_start=s, observation_end=e).dropna()
-        return ser if not ser.empty else None
+        r = requests.get(
+            "https://api.stlouisfed.org/fred/series/observations",
+            params={"series_id": "DGS10", "api_key": key, "file_type": "json",
+                    "observation_start": s, "observation_end": e},
+            timeout=20,
+        )
+        obs = r.json().get("observations", [])
+        pts = [(o["date"], float(o["value"])) for o in obs if o["value"] not in (".", "")]
+        if not pts:
+            return None
+        idx = pd.to_datetime([d for d, _ in pts])
+        return pd.Series([v for _, v in pts], index=idx).dropna()
     except Exception:
         return None
 

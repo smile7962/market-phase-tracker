@@ -3,5 +3,5 @@ finance-datareader>=0.9.9   # 키 불필요: 지수·주식·환율·WTI
 pandas>=2.0
 requests>=2.28              # ECOS API 호출
 # 아래는 선택 (자격증명 있을 때만 사용)
-fredapi>=0.5               # FRED 미국채10년 (FRED_API_KEY)
+# FRED 미국채10년·ECOS 국채3년은 requests 직접 호출 → 추가 의존성 없음
 pykrx>=1.0                 # KRX 투자자 순매수 (KRX_ID/KRX_PW, 환경에 따라 차단)

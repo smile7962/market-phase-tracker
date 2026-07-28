@@ -1,51 +1,51 @@
 [
   {
     "as_of": "2026-06-29",
-    "score": -45,
-    "label": "위험회피",
+    "score": -29,
+    "label": "경계",
     "confidence": 2
   },
   {
     "as_of": "2026-06-30",
-    "score": 25,
+    "score": 23,
     "label": "중립",
     "confidence": 5
   },
   {
     "as_of": "2026-07-01",
-    "score": -15,
+    "score": -13,
     "label": "경계",
     "confidence": 1
   },
   {
     "as_of": "2026-07-02",
-    "score": -19,
+    "score": -17,
     "label": "경계",
     "confidence": 3
   },
   {
     "as_of": "2026-07-03",
-    "score": 15,
+    "score": 13,
     "label": "중립",
     "confidence": 1
   },
   {
     "as_of": "2026-07-06",
-    "score": -15,
+    "score": -3,
     "label": "경계",
     "confidence": 3
   },
   {
     "as_of": "2026-07-07",
-    "score": -45,
+    "score": -51,
     "label": "위험회피",
-    "confidence": 4
+    "confidence": 5
   },
   {
     "as_of": "2026-07-08",
-    "score": -15,
+    "score": -24,
     "label": "경계",
-    "confidence": 4
+    "confidence": 5
   },
   {
     "as_of": "2026-07-09",
@@ -55,61 +55,61 @@
   },
   {
     "as_of": "2026-07-10",
-    "score": 0,
+    "score": -11,
     "label": "경계",
-    "confidence": 0
+    "confidence": 2
   },
   {
     "as_of": "2026-07-13",
-    "score": -46,
+    "score": -50,
     "label": "위험회피",
-    "confidence": 6
+    "confidence": 7
   },
   {
     "as_of": "2026-07-14",
-    "score": 25,
+    "score": 23,
     "label": "중립",
     "confidence": 2
   },
   {
     "as_of": "2026-07-15",
-    "score": 38,
+    "score": 35,
     "label": "위험선호 확장",
     "confidence": 2
   },
   {
     "as_of": "2026-07-16",
-    "score": -38,
+    "score": -43,
     "label": "위험회피",
-    "confidence": 5
-  },
-  {
-    "as_of": "2026-07-20",
-    "score": -2,
-    "label": "경계",
     "confidence": 6
   },
   {
+    "as_of": "2026-07-20",
+    "score": -10,
+    "label": "경계",
+    "confidence": 7
+  },
+  {
     "as_of": "2026-07-21",
-    "score": 16,
+    "score": 7,
     "label": "중립",
     "confidence": 1
   },
   {
     "as_of": "2026-07-22",
-    "score": 14,
+    "score": 5,
     "label": "중립",
     "confidence": 2
   },
   {
     "as_of": "2026-07-23",
-    "score": 30,
+    "score": 20,
     "label": "중립",
     "confidence": 2
   },
   {
     "as_of": "2026-07-24",
-    "score": -46,
+    "score": -42,
     "label": "위험회피",
     "confidence": 6
   },

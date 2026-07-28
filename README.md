@@ -20,8 +20,8 @@ python collect.py                 # 최신 영업일 (또는 --date 2026-07-24)
 python -m http.server -d web 8000 # http://localhost:8000
 ```
 키 없이도 **9/11 지표**가 수집된다 — 코스피·코스닥·삼성·하이닉스·환율·WTI(FDR) +
-외국인/기관/개인 순매수(Naver Finance 폴백). `ECOS_API_KEY`가 있으면 국채3년까지
-**10/11**. 미국채10년(FRED)만 `FRED_API_KEY`가 있을 때 채워진다.
+외국인/기관/개인 순매수(Naver Finance 폴백). `ECOS_API_KEY`(국채3년)와
+`FRED_API_KEY`(미국채10년)를 넣으면 **11/11 전 지표**가 채워진다.
 
 ## 앱 탭
 - **국면** — 오늘의 국면 배지 + −100~+100 게이지 + 한 줄 흐름 + 신뢰도
