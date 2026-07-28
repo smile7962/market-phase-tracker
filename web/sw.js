@@ -1,5 +1,9 @@
-/* 서비스 워커 — 앱 셸은 캐시 우선, data.json은 네트워크 우선(오프라인 폴백). */
-const CACHE = "mpt-v1";
+/* 서비스 워커.
+ * - HTML(앱 셸)·data.json·history.json: 네트워크 우선(오프라인 시 캐시 폴백)
+ *   → UI/데이터 갱신이 즉시 반영되고, 오프라인에서도 마지막 버전이 뜬다.
+ * - 아이콘·매니페스트 등 정적 자산: 캐시 우선.
+ * 캐시 버전을 올리면 activate에서 옛 캐시를 지워 강제 갱신된다. */
+const CACHE = "mpt-v3";
 const SHELL = [
   "./",
   "./index.html",
@@ -20,21 +24,29 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+function networkFirst(req) {
+  return fetch(req)
+    .then((r) => {
+      const copy = r.clone();
+      caches.open(CACHE).then((c) => c.put(req, copy));
+      return r;
+    })
+    .catch(() => caches.match(req).then((r) => r || caches.match("./index.html")));
+}
+
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  // 데이터는 항상 최신 우선, 실패 시 캐시
-  if (url.pathname.endsWith("data.json") || url.pathname.endsWith("history.json")) {
-    e.respondWith(
-      fetch(e.request)
-        .then((r) => {
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return r;
-        })
-        .catch(() => caches.match(e.request))
-    );
+  const isHTML =
+    e.request.mode === "navigate" ||
+    url.pathname.endsWith("/") ||
+    url.pathname.endsWith(".html");
+  const isData =
+    url.pathname.endsWith("data.json") || url.pathname.endsWith("history.json");
+
+  if (isHTML || isData) {
+    e.respondWith(networkFirst(e.request));
     return;
   }
-  // 앱 셸은 캐시 우선
+  // 정적 자산은 캐시 우선
   e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
 });
