@@ -136,5 +136,11 @@
     "score": -2,
     "label": "경계",
     "confidence": 6
+  },
+  {
+    "as_of": "2026-07-31",
+    "score": 30,
+    "label": "중립",
+    "confidence": 2
   }
 ]
