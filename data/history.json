@@ -148,5 +148,11 @@
     "score": -61,
     "label": "위험회피",
     "confidence": 6
+  },
+  {
+    "as_of": "2026-08-04",
+    "score": 19,
+    "label": "중립",
+    "confidence": 3
   }
 ]
