@@ -151,8 +151,8 @@
   },
   {
     "as_of": "2026-08-04",
-    "score": -41,
-    "label": "위험회피",
-    "confidence": 6
+    "score": -16,
+    "label": "경계",
+    "confidence": 3
   }
 ]
