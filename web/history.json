@@ -154,5 +154,11 @@
     "score": -6,
     "label": "경계",
     "confidence": 2
+  },
+  {
+    "as_of": "2026-08-05",
+    "score": 52,
+    "label": "위험선호 확장",
+    "confidence": 3
   }
 ]
