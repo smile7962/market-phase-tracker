@@ -166,5 +166,11 @@
     "score": -15,
     "label": "경계",
     "confidence": 4
+  },
+  {
+    "as_of": "2026-08-07",
+    "score": -28,
+    "label": "경계",
+    "confidence": 4
   }
 ]
