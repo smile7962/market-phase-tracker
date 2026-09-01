@@ -268,5 +268,11 @@
     "score": 5,
     "label": "중립",
     "confidence": 4
+  },
+  {
+    "as_of": "2026-09-01",
+    "score": -12,
+    "label": "경계",
+    "confidence": 3
   }
 ]
