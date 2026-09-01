@@ -271,8 +271,8 @@
   },
   {
     "as_of": "2026-09-01",
-    "score": -12,
-    "label": "경계",
-    "confidence": 3
+    "score": 3,
+    "label": "중립",
+    "confidence": 4
   }
 ]
