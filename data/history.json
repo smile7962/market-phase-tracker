@@ -283,8 +283,8 @@
   },
   {
     "as_of": "2026-09-03",
-    "score": -33,
-    "label": "위험회피",
-    "confidence": 5
+    "score": 17,
+    "label": "중립",
+    "confidence": 3
   }
 ]
