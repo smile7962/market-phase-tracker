@@ -322,5 +322,11 @@
     "score": -55,
     "label": "위험회피",
     "confidence": 5
+  },
+  {
+    "as_of": "2026-09-14",
+    "score": -30,
+    "label": "경계",
+    "confidence": 4
   }
 ]
