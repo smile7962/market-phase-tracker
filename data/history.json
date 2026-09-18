@@ -346,5 +346,11 @@
     "score": -30,
     "label": "경계",
     "confidence": 3
+  },
+  {
+    "as_of": "2026-09-18",
+    "score": -30,
+    "label": "경계",
+    "confidence": 3
   }
 ]
