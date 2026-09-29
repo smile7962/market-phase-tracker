@@ -391,8 +391,8 @@
   },
   {
     "as_of": "2026-09-29",
-    "score": -42,
-    "label": "위험회피",
-    "confidence": 3
+    "score": -5,
+    "label": "경계",
+    "confidence": 1
   }
 ]
