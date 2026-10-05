@@ -412,5 +412,11 @@
     "score": 17,
     "label": "중립",
     "confidence": 5
+  },
+  {
+    "as_of": "2026-10-05",
+    "score": 35,
+    "label": "위험선호 확장",
+    "confidence": 6
   }
 ]
