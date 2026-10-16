@@ -466,5 +466,11 @@
     "score": -58,
     "label": "위험회피",
     "confidence": 6
+  },
+  {
+    "as_of": "2026-10-16",
+    "score": -18,
+    "label": "경계",
+    "confidence": 1
   }
 ]
