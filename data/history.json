@@ -502,5 +502,11 @@
     "score": -23,
     "label": "경계",
     "confidence": 4
+  },
+  {
+    "as_of": "2026-10-26",
+    "score": -10,
+    "label": "경계",
+    "confidence": 4
   }
 ]
