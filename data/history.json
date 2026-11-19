@@ -613,8 +613,8 @@
   },
   {
     "as_of": "2026-11-19",
-    "score": -27,
-    "label": "경계",
-    "confidence": 5
+    "score": 5,
+    "label": "중립",
+    "confidence": 2
   }
 ]
